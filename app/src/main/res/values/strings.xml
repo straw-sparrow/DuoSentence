@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">DuoSentence</string>
+    <string name="replay">Replay↺</string>
+    <string name="stop">Stop■</string>
+    <string name="prev">＜前へ</string>
+    <string name="next">次へ＞</string>
+</resources>
