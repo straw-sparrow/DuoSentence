@@ -224,9 +224,6 @@ public class MainActivity extends AppCompatActivity {
         while(count < countlimit && forceEnd < len + 1) {
             int index = (int)(Math.random()* (len - count));
             String word = wordsList.get(index);
-            System.out.println("count▶▶▶▶▶count▶▶▶▶▶" + count);
-            System.out.println("index▶▶▶▶▶" + index);
-            System.out.println("wordsList▶▶▶▶▶" + wordsList);
             if(word.matches("[a-zA-Z|0-9|'|\\-|\\$]+")) {
                 String changedSentence = replaceStr(sentence, word);
                 if(!sentence.equals(changedSentence)) {
