@@ -13,6 +13,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -144,14 +147,26 @@ public class MainActivity extends AppCompatActivity {
 
     private void setSentenceBlock(String flg) {
         if(fillBlank.isChecked()){
-            if (flg == null && sentenceBlank != null && musicIndex == prevMusicIndex) {
+            System.out.println(Integer.parseInt(inputNo));
+            System.out.println(prevMusicIndex);
+            if (flg == null && sentenceBlank != null && Integer.parseInt(inputNo) == prevMusicIndex) {
                 sentenceBlock.setText(sentenceBlank);
             } else {
                 sentenceBlank = changeSentence(sentence);
-                sentenceBlock.setText(sentenceBlank);
+                sentenceBlock.setText(
+                        sentenceBlank
+                                .replaceAll(" \" ", "\"")
+                                .replaceAll(" \\. ", "\\.")
+                                .replaceAll("\n ", "\n")
+                );
             }
         } else {
-            sentenceBlock.setText(sentence);
+            sentenceBlock.setText(
+                    sentence
+                            .replaceAll(" \" ", "\"")
+                            .replaceAll(" \\. ", "\\.")
+                            .replaceAll("\n ", "\n")
+            );
         }
     }
 
@@ -196,24 +211,28 @@ public class MainActivity extends AppCompatActivity {
 
     private String changeSentence(String sentence) {
         String sentenceEng = sentence.split("\r\n|\r|\n")[1];
-        String engWords[] = sentenceEng.split(" |\\.|,|\\!|\\?");
-        return getBlankSentence(sentence, engWords);
+        String words[] = sentenceEng.split(" |\\.|,|\\!|\\?");
+        return getBlankSentence(sentence, new ArrayList<String>(Arrays.asList(words)));
     }
 
-    private String getBlankSentence(String sentence, String[] words) {
-        int len = words.length;
+    private String getBlankSentence(String sentence, List<String> wordsList) {
+        wordsList.removeAll(Arrays.asList("","\""));
+        int len = wordsList.size();
         int count = 0;
-        int countlimit = (int)((sBar.getProgress() * len)/100);
-        System.out.println(sBar.getProgress());
+        int countlimit = (int)(sBar.getProgress() * len/100);
         int forceEnd = 0;
-        while(count < countlimit && forceEnd < len*2) {
-            int index = (int)(Math.random()*len);
-            String word = words[index];
-            if(word.matches("[a-zA-Z']+")) {
+        while(count < countlimit && forceEnd < len + 1) {
+            int index = (int)(Math.random()* (len - count));
+            String word = wordsList.get(index);
+            System.out.println("count▶▶▶▶▶count▶▶▶▶▶" + count);
+            System.out.println("index▶▶▶▶▶" + index);
+            System.out.println("wordsList▶▶▶▶▶" + wordsList);
+            if(word.matches("[a-zA-Z|0-9|'|\\-|\\$]+")) {
                 String changedSentence = replaceStr(sentence, word);
                 if(!sentence.equals(changedSentence)) {
                     sentence = changedSentence;
                     count++;
+                    wordsList.remove(index);
                 }
             }
 
