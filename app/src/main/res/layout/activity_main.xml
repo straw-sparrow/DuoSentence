@@ -23,15 +23,18 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="3"
-        android:inputType="numberDecimal" />
+        android:inputType="numberDecimal"
+        android:textColor="#0600BC" />
 
 
     <Switch
         android:id="@+id/autoSwitch"
-        android:gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/autoPlay" />
+        android:gravity="center"
+        android:text="@string/autoPlay"
+        android:textColor="#000000"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -44,7 +47,8 @@
             android:layout_width="160dp"
             android:layout_height="match_parent"
             android:layout_margin="20dp"
-            android:text="@string/replay" />
+            android:text="@string/replay"
+            android:textStyle="bold" />
 
         <!--        <Button-->
         <!--            android:id="@+id/stop"-->
@@ -65,14 +69,16 @@
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
-            android:text="@string/prev" />
+            android:text="@string/prev"
+            android:textStyle="bold" />
 
         <Button
             android:id="@+id/next"
             android:layout_width="80dp"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
-            android:text="@string/next" />
+            android:text="@string/next"
+            android:textStyle="bold" />
 
     </LinearLayout>
 
@@ -80,6 +86,13 @@
         android:id="@+id/fillBlank"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Fill-in-the-blank" />
+        android:text="Fill-in-the-blank"
+        android:textColor="#000000"
+        android:textStyle="bold" />
+
+    <SeekBar
+        android:id="@+id/seekBar"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content" />
 
 </LinearLayout>

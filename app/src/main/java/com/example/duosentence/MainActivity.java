@@ -8,6 +8,7 @@ import android.widget.Button;
 import android.content.res.AssetFileDescriptor;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,9 +22,11 @@ public class MainActivity extends AppCompatActivity {
     private String sentence;
     private String sentenceBlank;
     private int musicIndex;
+    private int prevMusicIndex;
     private ConfigPropUtil config;
     Switch autoPlay;
     Switch fillBlank;
+    SeekBar sBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,9 +38,14 @@ public class MainActivity extends AppCompatActivity {
         autoPlay = findViewById(R.id.autoSwitch);
         // 虫食いモード
         fillBlank = findViewById(R.id.fillBlank);
+        // 割合
+        sBar = findViewById(R.id.seekBar);
+        sBar.setProgress(50);
+        sBar.setMax(100);
 
         // 曲インデックス初期値１
         musicIndex = 1;
+        prevMusicIndex = 0;
         // プロパティファイル読み込み
         config = new ConfigPropUtil();
 
@@ -45,8 +53,6 @@ public class MainActivity extends AppCompatActivity {
         Button buttonStart = findViewById(R.id.start);
         // リスナーをボタンに登録
         buttonStart.setOnClickListener( v ->  {
-            // 番号指定
-            inputNo = ((EditText)findViewById(R.id.inputNo)).getText().toString();
             playMusic(null);
         });
 
@@ -62,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
 
         // 虫食い時
         fillBlank.setOnCheckedChangeListener((fillBlank, isChecked) -> {
-            inputNo = ((EditText)findViewById(R.id.inputNo)).getText().toString();
             playMusic("");
         });
     }
@@ -74,9 +79,7 @@ public class MainActivity extends AppCompatActivity {
 
         //音楽ファイル名, あるいはパス
         String filePath = "sentence001.mp3";
-        if (!"".equals(inputNo)) {
-            musicIndex = Integer.parseInt(inputNo);
-        }
+        musicIndex = Integer.parseInt(inputNo);
         if (musicIndex < 1 || musicIndex > 560) {
             return fileCheck;
         }
@@ -101,9 +104,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void audioPlay(String flg) {
 
+        sentence = (String) config.get(inputNo);
+        setSentenceBlock(flg);
         if (mediaPlayer == null) {
-            sentence = (String) config.get(inputNo);
-            setSentenceBlock(flg);
             // audio ファイルを読出し
             if (!audioSetup()){
                 Toast.makeText(getApplication(), "Error: read audio file", Toast.LENGTH_SHORT).show();
@@ -141,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void setSentenceBlock(String flg) {
         if(fillBlank.isChecked()){
-            if (flg == null && sentenceBlank != null && musicIndex == Integer.parseInt(inputNo)) {
+            if (flg == null && sentenceBlank != null && musicIndex == prevMusicIndex) {
                 sentenceBlock.setText(sentenceBlank);
             } else {
                 sentenceBlank = changeSentence(sentence);
@@ -164,6 +167,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void playMusic(String flg) {
+        prevMusicIndex = musicIndex;
+        inputNo = ((EditText)findViewById(R.id.inputNo)).getText().toString();
+        if ("".equals(inputNo)){
+            inputNo = "1";
+        }
         if (mediaPlayer != null) {
             // 音楽停止
             audioStop();
@@ -173,19 +181,17 @@ public class MainActivity extends AppCompatActivity {
             if (musicIndex > 560) {
                 musicIndex = 1;
             }
-            // 音楽再生
-            ((EditText)findViewById(R.id.inputNo)).setText(String.valueOf(musicIndex));
-            inputNo = "";
+            inputNo = String.valueOf(musicIndex);
         } else if ("-".equals(flg)) {
             musicIndex--;
             if (musicIndex < 1) {
                 musicIndex = 560;
             }
-            // 音楽再生
-            ((EditText)findViewById(R.id.inputNo)).setText(String.valueOf(musicIndex));
-            inputNo = "";
+            inputNo = String.valueOf(musicIndex);
         }
+        // 音楽再生
         audioPlay(flg);
+        ((EditText)findViewById(R.id.inputNo)).setText(inputNo);
     }
 
     private String changeSentence(String sentence) {
@@ -197,12 +203,13 @@ public class MainActivity extends AppCompatActivity {
     private String getBlankSentence(String sentence, String[] words) {
         int len = words.length;
         int count = 0;
+        int countlimit = (int)((sBar.getProgress() * len)/100);
+        System.out.println(sBar.getProgress());
         int forceEnd = 0;
-        while(count < 2 && forceEnd<10) {
+        while(count < countlimit && forceEnd < len*2) {
             int index = (int)(Math.random()*len);
             String word = words[index];
-            System.out.println("■■■■■■word■■■■■" + word);
-            if(word.matches("[a-zA-Z]+")) {
+            if(word.matches("[a-zA-Z']+")) {
                 String changedSentence = replaceStr(sentence, word);
                 if(!sentence.equals(changedSentence)) {
                     sentence = changedSentence;
@@ -213,12 +220,12 @@ public class MainActivity extends AppCompatActivity {
             // 無限ループ対策
             forceEnd++;
         }
-        System.out.println("■■■■■■sentence■■■■■" + sentence);
         return sentence;
     }
 
     private String replaceStr(String sentence, String word) {
         sentence = replaceStrReg(sentence, word, " ", " ");
+        sentence = replaceStrReg(sentence, word, "\"", " ");
         sentence = replaceStrReg(sentence, word, " ", "\\.");
         sentence = replaceStrReg(sentence, word, " ", ",");
         sentence = replaceStrReg(sentence, word, " ", "\\?");
