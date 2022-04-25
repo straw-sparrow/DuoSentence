@@ -11,7 +11,7 @@
     <TextView
         android:id="@+id/sentence"
         android:layout_width="match_parent"
-        android:layout_height="111dp"
+        android:layout_height="180dp"
         android:text="sentence"
         android:textColor="#000000"
         android:textSize="16sp"
@@ -24,6 +24,14 @@
         android:layout_height="wrap_content"
         android:ems="3"
         android:inputType="numberDecimal" />
+
+
+    <Switch
+        android:id="@+id/autoSwitch"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/autoPlay" />
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -67,5 +75,11 @@
             android:text="@string/next" />
 
     </LinearLayout>
+
+    <Switch
+        android:id="@+id/fillBlank"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Fill-in-the-blank" />
 
 </LinearLayout>

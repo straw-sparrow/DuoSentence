@@ -6,7 +6,9 @@ import android.media.MediaPlayer;
 import android.util.Log;
 import android.widget.Button;
 import android.content.res.AssetFileDescriptor;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.IOException;
@@ -17,8 +19,11 @@ public class MainActivity extends AppCompatActivity {
     private TextView sentenceBlock;
     private String inputNo;
     private String sentence;
+    private String sentenceBlank;
     private int musicIndex;
     private ConfigPropUtil config;
+    Switch autoPlay;
+    Switch fillBlank;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,75 +31,41 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         // 文章表示
         sentenceBlock = findViewById(R.id.sentence);
-        // 音楽開始ボタン
-        Button buttonStart = findViewById(R.id.start);
+        // 連続再生スイッチ
+        autoPlay = findViewById(R.id.autoSwitch);
+        // 虫食いモード
+        fillBlank = findViewById(R.id.fillBlank);
+
         // 曲インデックス初期値１
         musicIndex = 1;
         // プロパティファイル読み込み
         config = new ConfigPropUtil();
 
+        // 音楽開始ボタン
+        Button buttonStart = findViewById(R.id.start);
         // リスナーをボタンに登録
         buttonStart.setOnClickListener( v ->  {
             // 番号指定
             inputNo = ((EditText)findViewById(R.id.inputNo)).getText().toString();
-            if (mediaPlayer != null) {
-                // 音楽停止
-                audioStop();
-            }
-            // 音楽再生
-            audioPlay();
+            playMusic(null);
         });
-
-//        // 音楽停止ボタン
-//        Button buttonStop = findViewById(R.id.stop);
-//
-//        // リスナーをボタンに登録
-//        buttonStop.setOnClickListener( v -> {
-//            if (mediaPlayer != null) {
-//                // 音楽停止
-//                audioStop();
-//            }
-//        });
 
         // 前へボタン
         Button buttonPrev = findViewById(R.id.prev);
-
         // リスナーをボタンに登録
-        buttonPrev.setOnClickListener( v -> {
-            if (mediaPlayer != null) {
-                // 音楽停止
-                audioStop();
-            }
-            musicIndex--;
-            if (musicIndex < 1) {
-                musicIndex = 560;
-            }
-            // 音楽再生
-            ((EditText)findViewById(R.id.inputNo)).setText(String.valueOf(musicIndex));
-            inputNo = "";
-            audioPlay();
-        });
+        buttonPrev.setOnClickListener(v -> playMusic("-"));
 
         // 次へボタン
         Button buttonNext = findViewById(R.id.next);
-
         // リスナーをボタンに登録
-        buttonNext.setOnClickListener( v -> {
-            if (mediaPlayer != null) {
-                // 音楽停止
-                audioStop();
-            }
-            musicIndex++;
-            if (musicIndex > 560) {
-                musicIndex = 1;
-            }
-            // 音楽再生
-            ((EditText)findViewById(R.id.inputNo)).setText(String.valueOf(musicIndex));
-            inputNo = "";
-            audioPlay();
+        buttonNext.setOnClickListener(v -> playMusic("+"));
+
+        // 虫食い時
+        fillBlank.setOnCheckedChangeListener((fillBlank, isChecked) -> {
+            inputNo = ((EditText)findViewById(R.id.inputNo)).getText().toString();
+            playMusic("");
         });
     }
-
 
     private boolean audioSetup(){
         // インタンスを生成
@@ -128,15 +99,13 @@ public class MainActivity extends AppCompatActivity {
         return fileCheck;
     }
 
-    private void audioPlay() {
+    private void audioPlay(String flg) {
 
         if (mediaPlayer == null) {
+            sentence = (String) config.get(inputNo);
+            setSentenceBlock(flg);
             // audio ファイルを読出し
-            if (audioSetup()){
-                sentence = (String) config.get(String.valueOf(musicIndex));
-//                System.out.println(sentence);
-//                Toast.makeText(getApplication(), "Read audio file", Toast.LENGTH_SHORT).show();
-            } else{
+            if (!audioSetup()){
                 Toast.makeText(getApplication(), "Error: read audio file", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -146,12 +115,10 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer.reset();
             // リソースの解放
             mediaPlayer.release();
-//            System.out.println("繰り返し");
         }
 
         // 再生する
         mediaPlayer.start();
-        sentenceBlock.setText(sentence);
 
         // 終了を検知するリスナー
 //        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -165,8 +132,24 @@ public class MainActivity extends AppCompatActivity {
         mediaPlayer.setOnCompletionListener( mp -> {
             Log.d("debug","end of audio");
             audioStop();
+            if(autoPlay.isChecked()){
+                playMusic("+");
+            }
         });
 
+    }
+
+    private void setSentenceBlock(String flg) {
+        if(fillBlank.isChecked()){
+            if (flg == null && sentenceBlank != null && musicIndex == Integer.parseInt(inputNo)) {
+                sentenceBlock.setText(sentenceBlank);
+            } else {
+                sentenceBlank = changeSentence(sentence);
+                sentenceBlock.setText(sentenceBlank);
+            }
+        } else {
+            sentenceBlock.setText(sentence);
+        }
     }
 
     private void audioStop() {
@@ -178,5 +161,79 @@ public class MainActivity extends AppCompatActivity {
         mediaPlayer.release();
 
         mediaPlayer = null;
+    }
+
+    private void playMusic(String flg) {
+        if (mediaPlayer != null) {
+            // 音楽停止
+            audioStop();
+        }
+        if ("+".equals(flg)) {
+            musicIndex++;
+            if (musicIndex > 560) {
+                musicIndex = 1;
+            }
+            // 音楽再生
+            ((EditText)findViewById(R.id.inputNo)).setText(String.valueOf(musicIndex));
+            inputNo = "";
+        } else if ("-".equals(flg)) {
+            musicIndex--;
+            if (musicIndex < 1) {
+                musicIndex = 560;
+            }
+            // 音楽再生
+            ((EditText)findViewById(R.id.inputNo)).setText(String.valueOf(musicIndex));
+            inputNo = "";
+        }
+        audioPlay(flg);
+    }
+
+    private String changeSentence(String sentence) {
+        String sentenceEng = sentence.split("\r\n|\r|\n")[1];
+        String engWords[] = sentenceEng.split(" |\\.|,|\\!|\\?");
+        return getBlankSentence(sentence, engWords);
+    }
+
+    private String getBlankSentence(String sentence, String[] words) {
+        int len = words.length;
+        int count = 0;
+        int forceEnd = 0;
+        while(count < 2 && forceEnd<10) {
+            int index = (int)(Math.random()*len);
+            String word = words[index];
+            System.out.println("■■■■■■word■■■■■" + word);
+            if(word.matches("[a-zA-Z]+")) {
+                String changedSentence = replaceStr(sentence, word);
+                if(!sentence.equals(changedSentence)) {
+                    sentence = changedSentence;
+                    count++;
+                }
+            }
+
+            // 無限ループ対策
+            forceEnd++;
+        }
+        System.out.println("■■■■■■sentence■■■■■" + sentence);
+        return sentence;
+    }
+
+    private String replaceStr(String sentence, String word) {
+        sentence = replaceStrReg(sentence, word, " ", " ");
+        sentence = replaceStrReg(sentence, word, " ", "\\.");
+        sentence = replaceStrReg(sentence, word, " ", ",");
+        sentence = replaceStrReg(sentence, word, " ", "\\?");
+        sentence = replaceStrReg(sentence, word, " ", "\\!");
+        return sentence;
+    }
+    private String replaceStrReg(String sentence, String word, String prevRegex, String nextRegex){
+        return sentence.replaceFirst(prevRegex + word + nextRegex, prevRegex + underScore(word.length()) + nextRegex);
+    }
+
+    private String underScore(int num) {
+        StringBuilder sb = new StringBuilder();
+        for(int i =0; i < num; i++) {
+            sb.append("_");
+        }
+        return sb.toString();
     }
 }
